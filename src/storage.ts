@@ -83,7 +83,7 @@ if (
 }
 
 // biome-ignore lint/complexity/useLiteralKeys: tsc complains about this (TS4111)
-const storageUrlBase = process.env["STORAGE_URL_BASE"];
+export const storageUrlBase = process.env["STORAGE_URL_BASE"];
 
 if (!storageUrlBase) {
   throw new Error("STORAGE_URL_BASE is required");
