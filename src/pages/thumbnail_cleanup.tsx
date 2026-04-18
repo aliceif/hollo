@@ -1,6 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill";
 import { getLogger } from "@logtape/logtape";
-import { and, count, eq, exists, ilike, lt, notExists } from "drizzle-orm";
+import { and, count, eq, exists, ilike, lt, not, notExists } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { Hono } from "hono";
 import { DashboardLayout } from "../components/DashboardLayout";
@@ -56,6 +56,7 @@ data.get("/", async (c) => {
       .innerJoin(accounts, eq(posts.accountId, accounts.id))
       .where(
         and(
+          not(media.thumbnailCleaned),
           ilike(media.thumbnailUrl, `${storageUrlBase}%`),
           lt(media.created, new Date(new Date().getFullYear() - 1, 0, 1)),
           notExists(
@@ -150,6 +151,7 @@ data.get("/", async (c) => {
       .innerJoin(accounts, eq(posts.accountId, accounts.id))
       .where(
         and(
+          not(media.thumbnailCleaned),
           ilike(media.thumbnailUrl, `${storageUrlBase}%`),
           lt(media.created, new Date(new Date().getFullYear() - 1, 0, 1)),
           notExists(
@@ -181,6 +183,7 @@ data.get("/", async (c) => {
       .innerJoin(accounts, eq(posts.accountId, accounts.id))
       .where(
         and(
+          not(media.thumbnailCleaned),
           ilike(media.thumbnailUrl, `${storageUrlBase}%`),
           lt(media.created, oneYearAgo),
           notExists(
@@ -275,6 +278,7 @@ data.get("/", async (c) => {
       .innerJoin(accounts, eq(posts.accountId, accounts.id))
       .where(
         and(
+          not(media.thumbnailCleaned),
           ilike(media.thumbnailUrl, `${storageUrlBase}%`),
           lt(media.created, oneYearAgo),
           notExists(
@@ -301,6 +305,7 @@ data.get("/", async (c) => {
       .innerJoin(accounts, eq(posts.accountId, accounts.id))
       .where(
         and(
+          not(media.thumbnailCleaned),
           ilike(media.thumbnailUrl, `${storageUrlBase}%`),
           notExists(
             db
@@ -322,7 +327,12 @@ data.get("/", async (c) => {
         count: count(),
       })
       .from(media)
-      .where(ilike(media.thumbnailUrl, `${storageUrlBase}%`));
+      .where(
+        and(
+          not(media.thumbnailCleaned),
+          ilike(media.thumbnailUrl, `${storageUrlBase}%`),
+        ),
+      );
   } catch {
     thumbnailsCountResult = [{ count: 0 }];
   }
@@ -505,6 +515,7 @@ function readFilesToDelete(
     .innerJoin(accounts, eq(posts.accountId, accounts.id))
     .where(
       and(
+        not(media.thumbnailCleaned),
         ilike(media.thumbnailUrl, `${keyPrefix}%`),
         lt(media.created, before),
         notExists(
@@ -687,6 +698,10 @@ data.post("/clean", async (c) => {
         for (const medium of mediaToDelete) {
           if (medium.key != null) {
             await disk.delete(medium.key);
+            await db
+              .update(media)
+              .set({ thumbnailCleaned: true })
+              .where(eq(media.id, medium.id));
             ++deletionCounter;
           }
           ++processCounter;

@@ -539,6 +539,7 @@ export const media = pgTable(
     created: timestamp("created", { withTimezone: true })
       .notNull()
       .default(currentTimestamp),
+    thumbnailCleaned: boolean("thumbnail_cleaned").notNull().default(false),
   },
   (table) => [index().on(table.postId)],
 );
