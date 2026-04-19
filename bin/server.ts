@@ -1,6 +1,7 @@
 import { isIP } from "node:net";
 import { serve } from "@hono/node-server";
 import { behindProxy } from "x-forwarded-fetch";
+import { startCleanupWorker, stopCleanupWorker } from "../src/cleanup/worker";
 import { startImportWorker, stopImportWorker } from "../src/import/worker";
 import app from "../src/index";
 import { configureSentry } from "../src/sentry";
@@ -48,20 +49,23 @@ serve(
 
     console.log(`Listening on http://${host}:${info.port}/`);
 
-    // Start the import worker for background job processing
+    // Start the workers for background job processing
     startImportWorker();
+    startCleanupWorker();
   },
 );
 
 // Graceful shutdown handling
 process.on("SIGTERM", () => {
-  console.log("SIGTERM received, stopping import worker...");
+  console.log("SIGTERM received, stopping workers...");
   stopImportWorker();
+  stopCleanupWorker();
   process.exit(0);
 });
 
 process.on("SIGINT", () => {
-  console.log("SIGINT received, stopping import worker...");
+  console.log("SIGINT received, stopping workers...");
   stopImportWorker();
+  stopCleanupWorker();
   process.exit(0);
 });

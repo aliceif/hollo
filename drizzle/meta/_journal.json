@@ -547,6 +547,13 @@
       "when": 1776578639799,
       "tag": "0077_add_thumbnail_cleaned_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1776625098283,
+      "tag": "0078_add_cleanup_jobs",
+      "breakpoints": true
     }
   ]
 }
