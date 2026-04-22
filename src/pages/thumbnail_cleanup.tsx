@@ -399,7 +399,7 @@ data.post("/clean", async (c) => {
     );
   }
 
-  // Create the import job
+  // Create the cleanup job
   const jobId = uuidv7();
   await db.insert(cleanupJobs).values({
     id: jobId,
@@ -426,7 +426,7 @@ data.post("/clean", async (c) => {
 
   // Redirect to migrate page with job ID
   return c.redirect(
-    `/thumbnail_cleanup?import-job=${jobId}#cleanup-thumbnails`,
+    `/thumbnail_cleanup?cleanup-job=${jobId}#cleanup-thumbnails`,
   );
 });
 
