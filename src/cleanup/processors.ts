@@ -1,11 +1,8 @@
-import { getLogger } from "@logtape/logtape";
 import { eq } from "drizzle-orm";
 import db from "../db";
 import * as schema from "../schema";
 import { drive, storageUrlBase } from "../storage";
 import type { Uuid } from "../uuid";
-
-const logger = getLogger(["hollo", "cleanup-processors"]);
 
 // Type for thumbnail cleanup item data
 interface ThumbnailCleanupItemData {
@@ -22,24 +19,29 @@ export async function processThumbnailDeletion(
   });
 
   if (medium == null) {
-    logger.error("medium missing in database: {id}", { id: data.id });
     throw new Error(`medium missing in database: ${data.id}`);
   }
 
-  if (!medium.thumbnailUrl.startsWith(storageUrlBase as string)) {
-    logger.error(
-      "The thumbnail URL {thumbnailUrl} does not match the storage URL pattern {storageUrlBase}!",
-      {
-        thumbnailUrl: medium.thumbnailUrl,
-        storageUrlBase,
-      },
-    );
-    throw new Error(
-      `The thumbnail URL ${medium.thumbnailUrl} does not match the storage URL pattern ${storageUrlBase}!`,
-    );
+  if (storageUrlBase == null) {
+    throw new Error("storage url is not configured");
   }
 
-  const key = medium.thumbnailUrl.replace(storageUrlBase as string, "");
+  const key = medium.thumbnailUrl.split("/").slice(-3).join("/");
+
+  const reconstructedUrl = new URL(
+    key,
+    storageUrlBase + (storageUrlBase.endsWith("/") ? "" : "/"),
+  ).toString();
+
+  if (reconstructedUrl !== medium.thumbnailUrl) {
+    if (!medium.thumbnailUrl.startsWith(storageUrlBase)) {
+      throw new Error(
+        `The thumbnail URL ${medium.thumbnailUrl} does not match the storage URL pattern ${storageUrlBase}!`,
+      );
+    } else {
+      throw new Error(`The thumbnail URL ${medium.thumbnailUrl} is malformed.`);
+    }
+  }
 
   const disk = drive.use();
   await disk.delete(key);
