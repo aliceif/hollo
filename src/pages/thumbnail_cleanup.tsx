@@ -256,7 +256,7 @@ data.get("/", async (c) => {
             <>
               <form
                 method="post"
-                action={`/thumbnail_cleanup/${activeJob.id}/cancel`}
+                action={`/thumbnail_cleanup/clean/${activeJob.id}/cancel`}
               >
                 <button type="submit" class="secondary">
                   Cancel Cleanup
@@ -369,6 +369,7 @@ data.post("/clean_preview", async (c) => {
             lastItem.created.toLocaleString(),
           );
         }
+        doneUrl.hash = "cleanup-preview";
         return c.redirect(doneUrl);
       } catch (error) {
         logger.error("Failed to clean up: {error}", { error });
@@ -384,6 +385,7 @@ data.post("/clean_preview", async (c) => {
   if (typeof beforeParameter === "string") {
     errorUrl.searchParams.set("before", beforeParameter);
   }
+  errorUrl.hash = "cleanup-preview";
   return c.redirect(errorUrl);
 });
 
@@ -433,7 +435,7 @@ data.post("/clean", async (c) => {
     { jobId, count: mediaWithThumbnailToClean.length, category },
   );
 
-  // Redirect to migrate page with job ID
+  // Redirect to thumbnail cleanup page with job ID
   return c.redirect(
     `/thumbnail_cleanup?cleanup-job=${jobId}#cleanup-thumbnails`,
   );
@@ -465,10 +467,10 @@ data.post("/clean/:jobId/cancel", async (c) => {
     .set({ status: "cancelled", completedAt: new Date() })
     .where(eq(cleanupJobs.id, jobId));
 
-  logger.info("Import job {jobId} cancelled by user", { jobId });
+  logger.info("Cleanup job {jobId} cancelled by user", { jobId });
 
   return c.redirect(
-    `/thumbnail_cleanup/migrate?cleanup-data-result=${encodeURIComponent("Cleanup cancelled")}#cleanup-thumbnails`,
+    `/thumbnail_cleanup?cleanup-data-result=${encodeURIComponent("Cleanup cancelled")}#cleanup-thumbnails`,
   );
 });
 
